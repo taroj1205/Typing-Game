@@ -27,6 +27,7 @@ public class TypingManager : MonoBehaviour
     [SerializeField] Text hText;
     [SerializeField] Text wText;
     [SerializeField] Text aText;
+    [SerializeField] Text sText;
 
     // 問題を用意しておく
     private string[] _japanese = { };
@@ -51,13 +52,14 @@ public class TypingManager : MonoBehaviour
     private int words;
     int correct;
     int wrong;
+    int score;
 
     void Awake()
     {
         Files();
         ShowHistory();
         OutPut();
-        ShowAccuracy();
+        ShowStats();
     }
 
     // Update is called once per frame
@@ -211,7 +213,7 @@ public class TypingManager : MonoBehaviour
         string stats = wCorrect + "," + wWrong;
         File.WriteAllText(GlobalVariables.statsPath, stats, Encoding.UTF8);
         UnityEngine.Debug.Log("Correct! " + correct.ToString());
-        ShowAccuracy();
+        ShowStats();
         if (_aNum >= _eString.Length)
         {
             CorrectSound();
@@ -246,7 +248,7 @@ public class TypingManager : MonoBehaviour
 
         string stats = wCorrect + "," + wWrong;
         File.WriteAllText(GlobalVariables.statsPath, stats, Encoding.UTF8);
-        ShowAccuracy();
+        ShowStats();
         string typedOut = "<color=grey>" + _eString.Substring(0, _aNum) + "</color>";
         string notYet = "<color=#e06c75>" + _eString.Substring(_aNum) + "</color>";
         eText.text = typedOut + notYet;
@@ -319,7 +321,7 @@ public class TypingManager : MonoBehaviour
         }
     }
 
-    void ShowAccuracy()
+    void ShowStats()
     {
         // Read all the lines of the file into a string array
         string[] statsData = File.ReadAllLines(GlobalVariables.statsPath);
@@ -330,7 +332,9 @@ public class TypingManager : MonoBehaviour
         int correct = int.Parse(parts[0]);
         // assign the second part as wrong
         int wrong = int.Parse(parts[1]);
-        UnityEngine.Debug.Log(correct + "," + wrong);
+        UnityEngine.Debug.Log(correct + "," + wrong + "," + score);
+
+        // Accuracy
         if (wrong == 0)
         {
             aText.text = "<color=#1fd755>" + "100%" + "</color>";
@@ -354,8 +358,28 @@ public class TypingManager : MonoBehaviour
                 aText.text = "<color=#e06c75>" + accuracyText + "%" + "</color>";
             }
         }
+
+        // Score
+        score = correct - wrong;
+        if (score > 0)
+        {
+            string scoreText = score.ToString();
+            sText.text = "<color=#1fd755>" + "+" + scoreText + "</color>";
+        }
+        else if (score >= 0)
+        {
+            string scoreText = score.ToString();
+            sText.text = "<color=#1fd755>" + scoreText + "</color>";
+        }
+        else if (score < 0)
+        {
+            string scoreText = score.ToString();
+            sText.text = "<color=#e06c75>" + "-" + scoreText + "</color>";
+        }
+
         string wCorrect = correct.ToString();
         string wWrong = wrong.ToString();
+        string wScore = score.ToString();
 
         string stats = wCorrect + "," + wWrong;
         File.WriteAllText(GlobalVariables.statsPath, stats, Encoding.UTF8);
