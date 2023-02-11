@@ -28,6 +28,8 @@ public class TypingManager : MonoBehaviour
     [SerializeField] Text wText;
     [SerializeField] Text aText;
     [SerializeField] Text sText;
+    [SerializeField] Text speedText;
+    [SerializeField] Text timeText;
 
     // 問題を用意しておく
     private string[] _japanese = { };
@@ -53,50 +55,77 @@ public class TypingManager : MonoBehaviour
     int correct;
     int wrong;
     int score;
+    float startTime;
+    float time;
+    int letters;
+    float lastSpeed;
+    float lastKeyPressTime;
+    int lastKeyPressSpeed;
+
+    bool pause = false;
 
     void Awake()
     {
+        letters = 0;
         Files();
         ShowHistory();
         OutPut();
         ShowStats();
+        Speed();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.anyKeyDown)
+        if (!Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Escape) || (Input.GetKeyDown(KeyCode.Mouse0)))
         {
-            if (Input.GetKeyDown(KeyCode.Escape))
+            pause = !pause;
+            Time.timeScale = pause ? 0 : 1;
+        }
+        if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Escape))
+        {
+            Directory.Delete(GlobalVariables.dataPath, true);
+            Awake();
+            startTime = -Time.time;
+            if (pause == true)
             {
-                Directory.Delete(GlobalVariables.dataPath, true);
-                Awake();
-                return;
+                pause = !pause;
+                Time.timeScale = pause ? 0 : 1;
             }
-            else if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.E))
+            return;
+        }
+        if (pause == false)
+        {
+            Speed();
+            if (Input.anyKeyDown)
             {
-                System.Diagnostics.Process.Start("explorer.exe", Path.Combine(GlobalVariables.currentDirectory, GlobalVariables.filesPath.Replace('/', Path.DirectorySeparatorChar)));
-                UnityEngine.Debug.Log(GlobalVariables.currentDirectory + Path.DirectorySeparatorChar + GlobalVariables.filesPath.Replace('/', Path.DirectorySeparatorChar));
-                return;
-            }
-            else if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.R))
-            {
-                OutPut();
-                return;
-            }
-            if (Input.GetKeyDown(KeyCode.LeftAlt) || Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Mouse0) || Input.GetKeyDown(KeyCode.LeftControl))
-            {
-                return;
-            }
-            else if (Input.GetKeyDown(_eString[_aNum].ToString()))
-            {
-                // 正解
-                Correct();
-            }
-            else // if (Input.anyKeyDown)
-            {
-                // 失敗
-                Miss();
+                if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.E))
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", Path.Combine(GlobalVariables.currentDirectory, GlobalVariables.filesPath.Replace('/', Path.DirectorySeparatorChar)));
+                    UnityEngine.Debug.Log(GlobalVariables.currentDirectory + Path.DirectorySeparatorChar + GlobalVariables.filesPath.Replace('/', Path.DirectorySeparatorChar));
+                    return;
+                }
+                else if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.R))
+                {
+                    OutPut();
+                    return;
+                }
+                if (Input.GetKeyDown(KeyCode.LeftAlt) || Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Mouse0) || Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.LeftShift))
+                {
+                    return;
+                }
+                else if (Input.GetKeyDown(_eString[_aNum].ToString()))
+                {
+                    lastKeyPressTime = Time.time;
+                    lastKeyPressSpeed = Mathf.RoundToInt(letters / Time.time * 60);
+                    // 正解
+                    Correct();
+                }
+                else // if (Input.anyKeyDown)
+                {
+                    // 失敗
+                    Miss();
+                }
             }
         }
     }
@@ -129,7 +158,7 @@ public class TypingManager : MonoBehaviour
         if (!File.Exists(GlobalVariables.statsPath))
         {
             File.Create(GlobalVariables.statsPath).Dispose();
-            File.WriteAllText(GlobalVariables.statsPath, "0,0", Encoding.UTF8);
+            File.WriteAllText(GlobalVariables.statsPath, "0,0,0", Encoding.UTF8);
         }
     }
 
@@ -195,6 +224,7 @@ public class TypingManager : MonoBehaviour
     void Correct()
     {
         _aNum++;
+        letters++;
         // Read all the lines of the file into a string array
         string[] statsData = File.ReadAllLines(GlobalVariables.statsPath);
 
@@ -329,9 +359,9 @@ public class TypingManager : MonoBehaviour
         // split the line with comma separator
         string[] parts = statsData[0].Split(',');
         // assign the first part as correct
-        int correct = int.Parse(parts[0]);
+        correct = int.Parse(parts[0]);
         // assign the second part as wrong
-        int wrong = int.Parse(parts[1]);
+        wrong = int.Parse(parts[1]);
         UnityEngine.Debug.Log(correct + "," + wrong + "," + score);
 
         // Accuracy
@@ -379,9 +409,44 @@ public class TypingManager : MonoBehaviour
 
         string wCorrect = correct.ToString();
         string wWrong = wrong.ToString();
-        string wScore = score.ToString();
 
         string stats = wCorrect + "," + wWrong;
         File.WriteAllText(GlobalVariables.statsPath, stats, Encoding.UTF8);
+    }
+
+    void Speed()
+    {
+        time = 60 - Time.time - startTime;
+        float speed = Mathf.RoundToInt(letters / Time.time * 60);
+        if (speed == 0)
+        {
+            speedText.text = "Speed: <color=#1fd755>0</color>";
+        }
+        else
+        {
+            if (Time.time - lastKeyPressTime >= 1.0f && speed < lastKeyPressSpeed - 1)
+            {
+                speedText.text = "Speed: <color=#e06c75>" + speed.ToString() + "</color>";
+            }
+            else
+            {
+                speedText.text = "Speed: <color=#1fd755>" + speed.ToString() + "</color>";
+            }
+        }
+        lastSpeed = speed;
+        timeText.text = Mathf.RoundToInt(time).ToString();
+
+        if (time <= 0)
+        {
+            string wCorrect = correct.ToString();
+            string wWrong = wrong.ToString();
+            string wSpeed = speed.ToString();
+
+            string stats = wCorrect + "," + wWrong + "," + speed;
+            File.WriteAllText(GlobalVariables.statsPath, stats, Encoding.UTF8);
+            SceneManager.LoadScene("End");
+            SceneManager.UnloadSceneAsync("Main");
+            CancelInvoke("Speed");
+        }
     }
 }
