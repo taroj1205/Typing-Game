@@ -24,3 +24,5 @@
 **余分な部分を消すなどをして、コードを改善する。**
 
 [ブログ](https://taroj1205.hatenablog.com/archive/category/%E3%82%BF%E3%82%A4%E3%83%94%E3%83%B3%E3%82%B0%E3%82%B2%E3%83%BC%E3%83%A0)
+
+https://user-images.githubusercontent.com/61367823/218246995-e5e2c695-32ed-449c-9ace-54ac4f5c0046.mp4
