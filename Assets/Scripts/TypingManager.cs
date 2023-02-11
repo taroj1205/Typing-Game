@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Text;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 public class GlobalVariables
 {
@@ -66,6 +67,7 @@ public class TypingManager : MonoBehaviour
 
     void Awake()
     {
+        DontDestroyOnLoad(gameObject);
         letters = 0;
         Files();
         ShowHistory();
@@ -191,10 +193,13 @@ public class TypingManager : MonoBehaviour
             _eString = en[randomIndex];
             _jString = ja[randomIndex];
 
-            // Check if the selected word exists in the first row of history.csv
-            if (words > 0 && history[0].Contains(_eString))
+            for (int i = 0; i < history.Length; i++)
             {
-                _jString += " *";
+                if (Regex.IsMatch(history[i], @"\b" + _eString + @"\b"))
+                {
+                    _jString += " *";
+                    break;
+                }
             }
 
             if (words > 0)
@@ -418,7 +423,7 @@ public class TypingManager : MonoBehaviour
     {
         time = 60 - Time.time - startTime;
         float speed = Mathf.RoundToInt(letters / Time.time * 60);
-        if (speed == 0)
+        if (time == 60)
         {
             speedText.text = "Speed: <color=#1fd755>0</color>";
         }
@@ -446,6 +451,7 @@ public class TypingManager : MonoBehaviour
             File.WriteAllText(GlobalVariables.statsPath, stats, Encoding.UTF8);
             SceneManager.LoadScene("End");
             SceneManager.UnloadSceneAsync("Main");
+            pause = true;
             CancelInvoke("Speed");
         }
     }

@@ -5,64 +5,14 @@ using UnityEngine.SceneManagement;
 
 public class End : MonoBehaviour
 {
-    public Text sText;
-    public Text hText;
+    [SerializeField] Text sText;
+    [SerializeField] Text hText;
 
     int correct;
     int wrong;
     int score;
     float speed;
     string _wString;
-
-    void ShowStats()
-    {
-        // Read all the lines of the file into a string array
-        string[] statsData = File.ReadAllLines(GlobalVariables.statsPath);
-
-        // split the line with comma separator
-        string[] parts = statsData[0].Split(',');
-        // assign the first part as correct
-        correct = int.Parse(parts[0]);
-        // assign the second part as wrong
-        wrong = int.Parse(parts[1]);
-        UnityEngine.Debug.Log(correct + "," + wrong + "," + score);
-
-        // Accuracy
-        float accuracy = 0;
-        if (wrong == 0)
-        {
-            accuracy = 100;
-        }
-        else if (correct == 0 && wrong > 0)
-        {
-            accuracy = 0;
-        }
-        else
-        {
-            accuracy = correct / (float)(correct + wrong) * 100.0f;
-            accuracy = Mathf.Round(accuracy * 10f) / 10f;
-        }
-
-        // Score
-        score = correct - wrong;
-
-        // combine stats and accuracy into one line
-        string stats = "Accuracy: " + accuracy + "%" + "\nScore: " + score;
-
-        // add color based on score
-        if (score > 0)
-        {
-            sText.text = "<color=#1fd755>" + stats + "</color>";
-        }
-        else if (score >= 0)
-        {
-            sText.text = "<color=#1fd755>" + stats + "</color>";
-        }
-        else if (score < 0)
-        {
-            sText.text = "<color=#e06c75>" + stats + "</color>";
-        }
-    }
 
     void ShowHistory()
     {
@@ -85,7 +35,7 @@ public class End : MonoBehaviour
                 _wString = "0";
             }
 
-            sText.text += "Words: " + _wString + "\n";
+            sText.text += "Words: " + _wString;
 
             // Clear the hText UI element
             hText.text = "";
@@ -125,7 +75,7 @@ public class End : MonoBehaviour
     {
         if (SceneManager.GetActiveScene().name == "End")
         {
-            ShowStatsAndHistory();
+            ShowStats();
         }
         else
         {
@@ -133,7 +83,7 @@ public class End : MonoBehaviour
         }
     }
 
-    void ShowStatsAndHistory()
+    void ShowStats()
     {
         // Read all the lines of the stats file into a string array
         string[] statsData = File.ReadAllLines(GlobalVariables.statsPath);
@@ -172,14 +122,7 @@ public class End : MonoBehaviour
             }
         }
 
-        if (Mathf.Round(speed) % 100 == 0)
-        {
-            sText.text += "Speed: <color=#e06c75>" + speed.ToString() + "</color>" + "\n";
-        }
-        else
-        {
-            sText.text += "Speed: <color=#1fd755>" + speed.ToString() + "</color>" + "\n";
-        }
+        sText.text += "Speed: <color=#1fd755>" + speed.ToString() + "</color>" + "\n";
 
         // Score
         score = correct - wrong;
